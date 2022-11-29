@@ -1,10 +1,13 @@
 package v1
 
 import (
+	"strconv"
+
 	"github.com/SaidovZohid/note-taking/api/models"
 	"github.com/SaidovZohid/note-taking/config"
 	"github.com/SaidovZohid/note-taking/storage"
 	"github.com/SaidovZohid/note-taking/storage/repo"
+	"github.com/gin-gonic/gin"
 )
 
 type handlerV1 struct {
@@ -30,7 +33,7 @@ func errResponse(err error) models.ResponseError {
 	}
 }
 
-func ParseModel(user *repo.User) models.GetUserResponse {
+func parseModel(user *repo.User) models.GetUserResponse {
 	return models.GetUserResponse{
 		ID:          user.ID,
 		FirstName:   user.FirstName,
@@ -42,4 +45,35 @@ func ParseModel(user *repo.User) models.GetUserResponse {
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,
 	}
+}
+
+func validate(ctx *gin.Context) (*models.GetAllParams, error) {
+	var (
+		limit  int64  = 10
+		page   int64  = 1
+		sortby string = "desc"
+		err    error
+	)
+	if ctx.Query("limit") != "" {
+		limit, err = strconv.ParseInt(ctx.Query("limit"), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if ctx.Query("page") != "" {
+		page, err = strconv.ParseInt(ctx.Query("page"), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if ctx.Query("sort_by") != "" &&
+		(ctx.Query("sort_by") == "desc" || ctx.Query("sort_by") == "asc") {
+		sortby = ctx.Query("sort_by")
+	}
+	return &models.GetAllParams{
+		Limit:  limit,
+		Page:   page,
+		Search: ctx.Query("search"),
+		SortBy: sortby,
+	}, nil
 }

@@ -23,3 +23,15 @@ type GetUserResponse struct {
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at"`
 }
+
+type GetAllUsers struct {
+	Users []*GetUserResponse `json:"users"`
+	Count int64          `json:"count"`
+}
+
+type GetAllParams struct {
+	Limit  int64  `json:"limit" default:"10"`
+	Page   int64  `json:"page" default:"1"`
+	Search string `json:"search"`
+	SortBy string `json:"sort_by" default:"desc" binding:"oneof=desc asc"`
+}

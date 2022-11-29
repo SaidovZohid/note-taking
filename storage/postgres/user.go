@@ -86,7 +86,7 @@ func (ur *userRepo) Get(user_id int64) (*repo.User, error) {
 		return nil, err
 	}
 
-	return nil, nil 
+	return &u, nil 
 }
 
 func (ur *userRepo) Update(u *repo.User) (*repo.User, error) {
@@ -137,7 +137,7 @@ func (ur *userRepo) Update(u *repo.User) (*repo.User, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return u, nil
 }
 
 func (ur *userRepo) Delete(user_id int64) error {
@@ -160,15 +160,15 @@ func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersRes
 	if params.Search != "" {
 		str := "%" + params.Search + "%"
 		filter = fmt.Sprintf(` 
-		WHERE first_name ILIKE '%s' OR 
+		 WHERE first_name ILIKE '%s' OR 
 		last_name ILIKE '%s' OR 
 		phone_number ILIKE '%s' OR 
-		email ILIKE '%s' username ILIKE '%s' `, str, str, str, str, str)
+		email ILIKE '%s' OR username ILIKE '%s' `, str, str, str, str, str)
 	}
 
-	orderBy := " ORDER BY DESC "
+	orderBy := " ORDER BY created_at DESC "
 	if params.SortBy != "" {
-		orderBy = fmt.Sprintf(" ORDER BY %s", params.SortBy)		
+		orderBy = fmt.Sprintf(" ORDER BY created_at %s ", params.SortBy)		
 	}
 
 	query := `
@@ -183,7 +183,7 @@ func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersRes
 			created_at,
 			updated_at
 		FROM users 
-	` + filter + limit + orderBy
+	` + filter + orderBy + limit
 
 	rows, err := ur.db.Query(query)
 	if err != nil {
@@ -215,5 +215,5 @@ func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersRes
 		return nil, err
 	}
 
-	return nil, nil 
+	return &res, nil 
 }
