@@ -48,21 +48,5 @@ func (h *handlerV1) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, parseModel(user))
-}
-
-
-
-func parseModel(user *repo.User) models.GetUserResponse {
-	return models.GetUserResponse{
-		ID: user.ID,
-		FirstName: user.FirstName,
-		LastName: user.LastName,
-		Email: user.LastName,
-		PhoneNumber: user.PhoneNumber,
-		Username: user.Username,
-		ImageUrl: user.ImageUrl,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-	}
+	ctx.JSON(http.StatusCreated, ParseModel(user))
 }
