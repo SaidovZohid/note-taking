@@ -6,8 +6,9 @@ import (
 )
 
 type Config struct {
-	HttpPort string
-	Postgres PostgresConfig
+	HttpPort  string
+	SecretKey string
+	Postgres  PostgresConfig
 }
 
 type PostgresConfig struct {
@@ -26,6 +27,7 @@ func New(path string) Config {
 
 	cfg := Config{
 		HttpPort: conf.GetString("HTTP_PORT"),
+		SecretKey: conf.GetString("SECRET_KEY"),
 		Postgres: PostgresConfig{
 			Host:     conf.GetString("POSTGRES_HOST"),
 			Port:     conf.GetString("POSTGRES_PORT"),

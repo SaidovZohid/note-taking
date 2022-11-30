@@ -6,7 +6,7 @@ type User struct {
 	ID          int64
 	FirstName   string
 	LastName    string
-	Username    *string
+	Username    string
 	Email       string
 	Password    string
 	PhoneNumber *string

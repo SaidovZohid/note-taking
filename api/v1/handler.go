@@ -47,7 +47,7 @@ func parseModel(user *repo.User) models.GetUserResponse {
 	}
 }
 
-func validate(ctx *gin.Context) (*models.GetAllParams, error) {
+func validate(ctx *gin.Context) (*models.GetAllNotesParams, error) {
 	var (
 		limit  int64  = 10
 		page   int64  = 1
@@ -70,7 +70,7 @@ func validate(ctx *gin.Context) (*models.GetAllParams, error) {
 		(ctx.Query("sort_by") == "desc" || ctx.Query("sort_by") == "asc") {
 		sortby = ctx.Query("sort_by")
 	}
-	return &models.GetAllParams{
+	return &models.GetAllNotesParams{
 		Limit:  limit,
 		Page:   page,
 		Search: ctx.Query("search"),

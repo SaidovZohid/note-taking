@@ -96,10 +96,10 @@ func (ur *userRepo) Update(u *repo.User) (*repo.User, error) {
 			last_name = $2,
 			phone_number = $3,
 			email = $4,
-			username = $6,
-			image_url = $7,
-			updated_at = $8
-		WHERE id = $9
+			username = $5,
+			image_url = $6,
+			updated_at = $7
+		WHERE id = $8
 		RETURNING
 			id,
 			first_name,
@@ -154,13 +154,13 @@ func (ur *userRepo) Delete(user_id int64) error {
 func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersResult,error) {
 	var res repo.GetAllUsersResult
 	res.Users = make([]*repo.User, 0)
-	filter := ""
+	filter := " WHERE deleted_at IS NULL "
 	offset := (params.Page - 1) * params.Limit
 	limit := fmt.Sprintf(" LIMIT %d OFFSET %d ", params.Limit, offset)
 	if params.Search != "" {
 		str := "%" + params.Search + "%"
 		filter = fmt.Sprintf(` 
-		 WHERE first_name ILIKE '%s' OR 
+		 AND first_name ILIKE '%s' OR 
 		last_name ILIKE '%s' OR 
 		phone_number ILIKE '%s' OR 
 		email ILIKE '%s' OR username ILIKE '%s' `, str, str, str, str, str)

@@ -9,6 +9,9 @@ run:
 print:
 	echo "$(DB_URL)"
 
+test: 
+	go test -v -cover ./storage/postgres
+
 migrate-up:
 	migrate -path migrations -database "$(DB_URL)" -verbose up
 
