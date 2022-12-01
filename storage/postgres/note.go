@@ -54,7 +54,7 @@ func (nr *noteRepo) Get(note_id int64) (*repo.Note, error) {
 			description,
 			created_at,
 			updated_at
-		FROM notes WHERE id = $1
+		FROM notes WHERE id = $1 AND deleted_at IS NULL 
 	`
 	err := nr.db.QueryRow(query, note_id).Scan(
 		&note.ID,

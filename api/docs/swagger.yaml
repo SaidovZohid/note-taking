@@ -1,6 +1,22 @@
 basePath: /v1
 definitions:
-  models.CreateUserRequest:
+  models.CreateOrUpdateNoteRequest:
+    properties:
+      description:
+        maxLength: 100
+        type: string
+      title:
+        maxLength: 100
+        minLength: 2
+        type: string
+      user_id:
+        type: integer
+    required:
+    - description
+    - title
+    - user_id
+    type: object
+  models.CreateOrUpdateUserRequest:
     properties:
       email:
         maxLength: 100
@@ -34,6 +50,15 @@ definitions:
     - last_name
     - password
     type: object
+  models.GetAllNotes:
+    properties:
+      count:
+        type: integer
+      notes:
+        items:
+          $ref: '#/definitions/models.GetNoteResponse'
+        type: array
+    type: object
   models.GetAllUsers:
     properties:
       count:
@@ -42,6 +67,21 @@ definitions:
         items:
           $ref: '#/definitions/models.GetUserResponse'
         type: array
+    type: object
+  models.GetNoteResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
     type: object
   models.GetUserResponse:
     properties:
@@ -80,6 +120,188 @@ info:
   description: This is a note service api.
   version: "2.0"
 paths:
+  /file-upload:
+    post:
+      consumes:
+      - application/json
+      description: File upload
+      parameters:
+      - description: File
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseOK'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+      summary: File upload
+      tags:
+      - file-upload
+  /notes:
+    get:
+      consumes:
+      - application/json
+      description: get all note
+      parameters:
+      - default: 10
+        in: query
+        name: limit
+        type: integer
+      - default: 1
+        in: query
+        name: page
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - default: desc
+        enum:
+        - desc
+        - asc
+        in: query
+        name: sort_by
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetAllNotes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+      summary: get all note
+      tags:
+      - note
+    post:
+      consumes:
+      - application/json
+      description: Create a note
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateOrUpdateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetNoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+      summary: Create a note
+      tags:
+      - note
+  /notes/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete a note
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseOK'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+      summary: delete a note
+      tags:
+      - note
+    get:
+      consumes:
+      - application/json
+      description: get a note by id
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetNoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+      summary: get a note by id
+      tags:
+      - note
+    put:
+      consumes:
+      - application/json
+      description: Update a note
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateOrUpdateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetNoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+      summary: Update a note
+      tags:
+      - note
   /users:
     get:
       consumes:
@@ -132,7 +354,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/models.CreateUserRequest'
+          $ref: '#/definitions/models.CreateOrUpdateUserRequest'
       produces:
       - application/json
       responses:
@@ -215,7 +437,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/models.CreateUserRequest'
+          $ref: '#/definitions/models.CreateOrUpdateUserRequest'
       produces:
       - application/json
       responses:

@@ -8,6 +8,7 @@ import (
 type Config struct {
 	HttpPort  string
 	SecretKey string
+	Smtp      Smtp
 	Postgres  PostgresConfig
 }
 
@@ -19,6 +20,11 @@ type PostgresConfig struct {
 	Database string
 }
 
+type Smtp struct {
+	Sender   string
+	Password string
+}
+
 func New(path string) Config {
 	godotenv.Load(path + "/.env")
 
@@ -26,7 +32,7 @@ func New(path string) Config {
 	conf.AutomaticEnv()
 
 	cfg := Config{
-		HttpPort: conf.GetString("HTTP_PORT"),
+		HttpPort:  conf.GetString("HTTP_PORT"),
 		SecretKey: conf.GetString("SECRET_KEY"),
 		Postgres: PostgresConfig{
 			Host:     conf.GetString("POSTGRES_HOST"),
@@ -34,6 +40,10 @@ func New(path string) Config {
 			User:     conf.GetString("POSTGRES_USER"),
 			Password: conf.GetString("POSTGRES_PASSWORD"),
 			Database: conf.GetString("POSTGRES_DATABASE"),
+		},
+		Smtp: Smtp{
+			Sender: conf.GetString("SMTP_SENDER"),
+			Password: conf.GetString("SMTP_PASSWORD"),
 		},
 	}
 

@@ -65,7 +65,7 @@ func (ur *userRepo) Get(user_id int64) (*repo.User, error) {
 			image_url,
 			created_at,
 			updated_at
-		FROM users WHERE id = $1
+		FROM users WHERE id = $1 and deleted_at is null
 	`
 	err := ur.db.QueryRow(
 		query,
@@ -111,6 +111,7 @@ func (ur *userRepo) Update(u *repo.User) (*repo.User, error) {
 			created_at,
 			updated_at
 	`
+	var res repo.User
 	err := ur.db.QueryRow(
 		query,
 		u.FirstName,
@@ -122,22 +123,22 @@ func (ur *userRepo) Update(u *repo.User) (*repo.User, error) {
 		time.Now(),
 		u.ID,
 	).Scan(
-		&u.ID,
-		&u.FirstName,
-		&u.LastName,
-		&u.PhoneNumber,
-		&u.Email,
-		&u.Username,
-		&u.ImageUrl,
-		&u.CreatedAt,
-		&u.UpdatedAt,
+		&res.ID,
+		&res.FirstName,
+		&res.LastName,
+		&res.PhoneNumber,
+		&res.Email,
+		&res.Username,
+		&res.ImageUrl,
+		&res.CreatedAt,
+		&res.UpdatedAt,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return u, nil
+	return &res, nil
 }
 
 func (ur *userRepo) Delete(user_id int64) error {
@@ -159,7 +160,7 @@ func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersRes
 	limit := fmt.Sprintf(" LIMIT %d OFFSET %d ", params.Limit, offset)
 	if params.Search != "" {
 		str := "%" + params.Search + "%"
-		filter = fmt.Sprintf(` 
+		filter += fmt.Sprintf(` 
 		 AND first_name ILIKE '%s' OR 
 		last_name ILIKE '%s' OR 
 		phone_number ILIKE '%s' OR 

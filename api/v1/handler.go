@@ -33,12 +33,12 @@ func errResponse(err error) models.ResponseError {
 	}
 }
 
-func parseModel(user *repo.User) models.GetUserResponse {
+func parseUserModel(user *repo.User) models.GetUserResponse {
 	return models.GetUserResponse{
 		ID:          user.ID,
 		FirstName:   user.FirstName,
 		LastName:    user.LastName,
-		Email:       user.LastName,
+		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
 		Username:    user.Username,
 		ImageUrl:    user.ImageUrl,
@@ -47,7 +47,49 @@ func parseModel(user *repo.User) models.GetUserResponse {
 	}
 }
 
-func validate(ctx *gin.Context) (*models.GetAllNotesParams, error) {
+func parseNoteModel(note *repo.Note) models.GetNoteResponse {
+	return models.GetNoteResponse{
+		ID:          note.ID,
+		UserID:      note.UserID,
+		Title:       note.Title,
+		Description: note.Description,
+		CreatedAt:   note.CreatedAt,
+		UpdatedAt:   note.UpdatedAt,
+	}
+}
+
+func validateUser(ctx *gin.Context) (*models.GetAllUsersParams, error) {
+	var (
+		limit  int64  = 10
+		page   int64  = 1
+		sortby string = "desc"
+		err    error
+	)
+	if ctx.Query("limit") != "" {
+		limit, err = strconv.ParseInt(ctx.Query("limit"), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if ctx.Query("page") != "" {
+		page, err = strconv.ParseInt(ctx.Query("page"), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if ctx.Query("sort_by") != "" &&
+		(ctx.Query("sort_by") == "desc" || ctx.Query("sort_by") == "asc") {
+		sortby = ctx.Query("sort_by")
+	}
+	return &models.GetAllUsersParams{
+		Limit:  limit,
+		Page:   page,
+		Search: ctx.Query("search"),
+		SortBy: sortby,
+	}, nil
+}
+
+func validateNote(ctx *gin.Context) (*models.GetAllNotesParams, error) {
 	var (
 		limit  int64  = 10
 		page   int64  = 1

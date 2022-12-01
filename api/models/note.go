@@ -2,13 +2,15 @@ package models
 
 import "time"
 
-type CreateNoteRequest struct {
+type CreateOrUpdateNoteRequest struct {
+	UserID      int64  `json:"user_id" binding:"required"`
 	Title       string `json:"title" binding:"required,min=2,max=100"`
 	Description string `json:"description" binding:"required,max=100"`
 }
 
 type GetNoteResponse struct {
 	ID          int64      `json:"id"`
+	UserID      int64      `json:"user_id"`
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	CreatedAt   time.Time  `json:"created_at"`

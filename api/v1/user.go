@@ -22,12 +22,12 @@ var (
 // @Tags user
 // @Accept json
 // @Produce json
-// @Param user body models.CreateUserRequest true "User"
+// @Param user body models.CreateOrUpdateUserRequest true "User"
 // @Success 201 {object} models.GetUserResponse
 // @Failure 500 {object} models.ResponseError
 func (h *handlerV1) CreateUser(ctx *gin.Context) {
 	var (
-		req models.CreateUserRequest
+		req models.CreateOrUpdateUserRequest
 	)
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -55,7 +55,7 @@ func (h *handlerV1) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, parseModel(user))
+	ctx.JSON(http.StatusCreated, parseUserModel(user))
 }
 
 // @Router /users/{id} [put]
@@ -65,7 +65,7 @@ func (h *handlerV1) CreateUser(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID"
-// @Param user body models.CreateUserRequest true "User"
+// @Param user body models.CreateOrUpdateUserRequest true "User"
 // @Success 200 {object} models.GetUserResponse
 // @Failure 500 {object} models.ResponseError
 // @Failure 400 {object} models.ResponseError
@@ -77,7 +77,7 @@ func (h *handlerV1) UpdateUser(ctx *gin.Context) {
 		return
 	}
 	var (
-		req models.CreateUserRequest
+		req models.CreateOrUpdateUserRequest
 	)
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errResponse(err))
@@ -103,7 +103,7 @@ func (h *handlerV1) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, parseModel(user))
+	ctx.JSON(http.StatusOK, parseUserModel(user))
 }
 
 // @Router /users/{id} [get]
@@ -129,7 +129,7 @@ func (h *handlerV1) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, parseModel(user))
+	ctx.JSON(http.StatusOK, parseUserModel(user))
 }
 
 // @Router /users/{id} [delete]
@@ -165,12 +165,12 @@ func (h *handlerV1) DeleteUser(ctx *gin.Context) {
 // @Tags user
 // @Accept json
 // @Produce json
-// @Param params query models.GetAllParams false "Params"
+// @Param params query models.GetAllUsersParams false "Params"
 // @Success 200 {object} models.GetAllUsers
 // @Failure 500 {object} models.ResponseError
 // @Failure 400 {object} models.ResponseError
 func (h *handlerV1) GetAllUsers(ctx *gin.Context) {
-	params, err := validate(ctx)
+	params, err := validateUser(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errResponse(err))
 		return
@@ -193,8 +193,8 @@ func getresults(users *repo.GetAllUsersResult) models.GetAllUsers {
 	var (
 		res models.GetAllUsers
 	)
-	for _, user := range  users.Users {
-		u := parseModel(user)
+	for _, user := range users.Users {
+		u := parseUserModel(user)
 		res.Users = append(res.Users, &u)
 	}
 	res.Count = users.Count
