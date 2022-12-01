@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// @Security ApiKeyAuth
 // @Router /notes [post]
 // @Summary Create a note
 // @Description Create a note
@@ -49,6 +50,7 @@ func (h *handlerV1) CreateNote(ctx *gin.Context) {
 	})
 }
 
+// @Security ApiKeyAuth
 // @Router /notes/{id} [get]
 // @Summary get a note by id
 // @Description get a note by id
@@ -82,6 +84,7 @@ func (h *handlerV1) GetNote(ctx *gin.Context) {
 	})
 }
 
+// @Security ApiKeyAuth
 // @Router /notes/{id} [put]
 // @Summary Update a note
 // @Description Update a note
@@ -122,6 +125,7 @@ func (h *handlerV1) UpdateNote(ctx *gin.Context) {
 	})
 }
 
+// @Security ApiKeyAuth
 // @Router /notes/{id} [delete]
 // @Summary delete a note
 // @Description delete a note

@@ -16,6 +16,7 @@ var (
 	ErrUserNotFound = errors.New("user does not exist")
 )
 
+// @Security ApiKeyAuth
 // @Router /users [post]
 // @Summary Create a user
 // @Description Create a user
@@ -58,6 +59,7 @@ func (h *handlerV1) CreateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, parseUserModel(user))
 }
 
+// @Security ApiKeyAuth
 // @Router /users/{id} [put]
 // @Summary Update a user
 // @Description Update a user
@@ -106,6 +108,7 @@ func (h *handlerV1) UpdateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, parseUserModel(user))
 }
 
+// @Security ApiKeyAuth
 // @Router /users/{id} [get]
 // @Summary Get a user
 // @Description Get a user
@@ -132,6 +135,7 @@ func (h *handlerV1) GetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, parseUserModel(user))
 }
 
+// @Security ApiKeyAuth
 // @Router /users/{id} [delete]
 // @Summary Delete a user
 // @Description Delete a user

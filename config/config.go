@@ -6,10 +6,12 @@ import (
 )
 
 type Config struct {
-	HttpPort  string
-	SecretKey string
-	Smtp      Smtp
-	Postgres  PostgresConfig
+	HttpPort      string
+	SecretKey     string
+	RedisAddr     string
+	Smtp          Smtp
+	Authorization Authorization
+	Postgres      PostgresConfig
 }
 
 type PostgresConfig struct {
@@ -25,6 +27,11 @@ type Smtp struct {
 	Password string
 }
 
+type Authorization struct {
+	HeaderKey  string
+	PayloadKey string
+}
+
 func New(path string) Config {
 	godotenv.Load(path + "/.env")
 
@@ -34,6 +41,7 @@ func New(path string) Config {
 	cfg := Config{
 		HttpPort:  conf.GetString("HTTP_PORT"),
 		SecretKey: conf.GetString("SECRET_KEY"),
+		RedisAddr: conf.GetString("REDIS_ADDR"),
 		Postgres: PostgresConfig{
 			Host:     conf.GetString("POSTGRES_HOST"),
 			Port:     conf.GetString("POSTGRES_PORT"),
@@ -42,8 +50,12 @@ func New(path string) Config {
 			Database: conf.GetString("POSTGRES_DATABASE"),
 		},
 		Smtp: Smtp{
-			Sender: conf.GetString("SMTP_SENDER"),
+			Sender:   conf.GetString("SMTP_SENDER"),
 			Password: conf.GetString("SMTP_PASSWORD"),
+		},
+		Authorization: Authorization{
+			HeaderKey:  conf.GetString("AUTH_HEADER_KEY"),
+			PayloadKey: conf.GetString("AUTH_PAYLOAD_KEY"),
 		},
 	}
 

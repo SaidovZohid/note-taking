@@ -16,6 +16,10 @@ type SendEmailRequest struct {
 	Subject string
 }
 
+var (
+	VerificationEmail = "verification_email"
+)
+
 func SendEmail(cfg *config.Config, req *SendEmailRequest) error {
 	from := cfg.Smtp.Sender
 	to := req.To
@@ -24,7 +28,7 @@ func SendEmail(cfg *config.Config, req *SendEmailRequest) error {
 
 	var body bytes.Buffer
 
-	templatePath := "./templates/verification_email.html"
+	templatePath := getTemplatePath(req.Type)
 	t, err := template.ParseFiles(templatePath)
 
 	if err != nil {
@@ -44,4 +48,12 @@ func SendEmail(cfg *config.Config, req *SendEmailRequest) error {
 	}
 
 	return nil
+}
+
+func getTemplatePath(emailType string) string {
+	switch emailType {
+	case VerificationEmail:
+		return "./templates/verification_email.html"
+	}
+	return ""
 }

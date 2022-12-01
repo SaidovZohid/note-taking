@@ -5,8 +5,10 @@ import (
 	"log"
 
 	"github.com/SaidovZohid/note-taking/api"
+	_ "github.com/SaidovZohid/note-taking/api/docs"
 	"github.com/SaidovZohid/note-taking/config"
 	"github.com/SaidovZohid/note-taking/storage"
+	"github.com/go-redis/redis/v9"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	_ "github.com/SaidovZohid/note-taking/api/docs"
@@ -28,14 +30,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-	fmt.Println("Configuration: ", cfg)
-	fmt.Println("Connected Succesfully!")
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisAddr,
+	})
 
 	strg := storage.NewStorage(psqlConn)
+	inMemory := storage.NewRedisStorage(rdb)
 
 	server := api.New(&api.RouteOptions{
 		Cfg: &cfg,
-		Storage: &strg,
+		Storage: strg,
+		InMemory: inMemory,
 	})
 
 	err = server.Run(cfg.HttpPort)

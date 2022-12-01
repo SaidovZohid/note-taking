@@ -1,29 +1,36 @@
 package v1
 
 import (
+	"log"
 	"strconv"
+	"time"
 
 	"github.com/SaidovZohid/note-taking/api/models"
 	"github.com/SaidovZohid/note-taking/config"
+	emailPkg "github.com/SaidovZohid/note-taking/pkg/email"
+	"github.com/SaidovZohid/note-taking/pkg/utils"
 	"github.com/SaidovZohid/note-taking/storage"
 	"github.com/SaidovZohid/note-taking/storage/repo"
 	"github.com/gin-gonic/gin"
 )
 
 type handlerV1 struct {
-	cfg     *config.Config
-	storage storage.StorageI
+	cfg      *config.Config
+	storage  storage.StorageI
+	inMemory storage.InMemoryStorageI
 }
 
 type HandlerV1 struct {
-	Cfg     *config.Config
-	Storage *storage.StorageI
+	Cfg      *config.Config
+	Storage  storage.StorageI
+	InMemory storage.InMemoryStorageI
 }
 
 func New(options *HandlerV1) *handlerV1 {
 	return &handlerV1{
-		cfg:     options.Cfg,
-		storage: *options.Storage,
+		cfg:      options.Cfg,
+		storage:  options.Storage,
+		inMemory: options.InMemory,
 	}
 }
 
@@ -118,4 +125,30 @@ func validateNote(ctx *gin.Context) (*models.GetAllNotesParams, error) {
 		Search: ctx.Query("search"),
 		SortBy: sortby,
 	}, nil
+}
+
+func (h *handlerV1) sendVerificationCode(key, email string) error {
+	code, err := utils.GenerateRandomCode(6)
+	if err != nil {
+		return err
+	}
+
+	err = h.inMemory.Set(key+email, code, time.Minute)
+	if err != nil {
+		return err
+	}
+
+	err = emailPkg.SendEmail(h.cfg, &emailPkg.SendEmailRequest{
+		To:      []string{email},
+		Subject: "Verification Email",
+		Body: map[string]string{
+			"code": code,
+		},
+		Type: emailPkg.VerificationEmail,
+	})
+	if err != nil {
+		log.Println("failed to sent code to email")
+	}
+
+	return nil
 }
