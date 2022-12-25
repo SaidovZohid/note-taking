@@ -33,8 +33,8 @@ services:
       - SMTP_SENDER=${SMTP_SENDER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - REDIS_ADDR=${REDIS_ADDR}
-      - AUTHORIZATION_HEADER_KEY=${AUTH_HEADER_KEY}
-      - AUTHORIZATION_PAYLOAD_KEY=${AUTH_PAYLOAD_KEY}
+      - AUTH_HEADER_KEY=${AUTH_HEADER_KEY}
+      - AUTH_PAYLOAD_KEY=${AUTH_PAYLOAD_KEY}
     depends_on:
       - postgres
     restart: always
