@@ -66,18 +66,12 @@ func (h *handlerV1) CreateUser(ctx *gin.Context) {
 // @Tags user
 // @Accept json
 // @Produce json
-// @Param id path int true "ID"
 // @Param user body models.CreateOrUpdateUserRequest true "User"
 // @Success 200 {object} models.GetUserResponse
 // @Failure 500 {object} models.ResponseError
 // @Failure 400 {object} models.ResponseError
 // @Failure 404 {object} models.ResponseError
 func (h *handlerV1) UpdateUser(ctx *gin.Context) {
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errResponse(err))
-		return
-	}
 	var (
 		req models.CreateOrUpdateUserRequest
 	)
@@ -85,9 +79,14 @@ func (h *handlerV1) UpdateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errResponse(err))
 		return
 	}
+	userPayload, err := h.GetAuthPayload(h.cfg, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errResponse(err))
+		return
+	}
 
 	user, err := h.storage.User().Update(&repo.User{
-		ID:          id,
+		ID:          userPayload.UserID,
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
 		PhoneNumber: req.PhoneNumber,
@@ -108,7 +107,6 @@ func (h *handlerV1) UpdateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, parseUserModel(user))
 }
 
-// @Security ApiKeyAuth
 // @Router /users/{id} [get]
 // @Summary Get a user
 // @Description Get a user
@@ -136,23 +134,48 @@ func (h *handlerV1) GetUser(ctx *gin.Context) {
 }
 
 // @Security ApiKeyAuth
+// @Router /users/me [get]
+// @Summary Get a user
+// @Description Get a user
+// @Tags user
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.GetUserResponse
+// @Failure 500 {object} models.ResponseError
+// @Failure 400 {object} models.ResponseError
+func (h *handlerV1) GetUserProfile(ctx *gin.Context) {
+	userPayload, err := h.GetAuthPayload(h.cfg, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errResponse(err))
+		return
+	}
+
+	user, err := h.storage.User().Get(userPayload.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, parseUserModel(user))
+}
+
+// @Security ApiKeyAuth
 // @Router /users/{id} [delete]
 // @Summary Delete a user
 // @Description Delete a user
 // @Tags user
 // @Accept json
 // @Produce json
-// @Param id path int true "ID"
 // @Success 200 {object} models.ResponseOK
 // @Failure 500 {object} models.ResponseError
 func (h *handlerV1) DeleteUser(ctx *gin.Context) {
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	userPayload, err := h.GetAuthPayload(h.cfg, ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errResponse(err))
+		ctx.JSON(http.StatusInternalServerError, errResponse(err))
 		return
 	}
 
-	err = h.storage.User().Delete(id)
+	err = h.storage.User().Delete(userPayload.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errResponse(err))
 		return

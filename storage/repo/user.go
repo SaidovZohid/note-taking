@@ -9,11 +9,11 @@ type User struct {
 	Username    string
 	Email       string
 	Password    string
-	PhoneNumber *string
-	ImageUrl    *string
+	PhoneNumber string
+	ImageUrl    string
 	CreatedAt   time.Time
-	UpdatedAt   *time.Time
-	DeletedAt   *time.Time
+	UpdatedAt   time.Time
+	DeletedAt   time.Time
 }
 
 type UserStorageI interface {

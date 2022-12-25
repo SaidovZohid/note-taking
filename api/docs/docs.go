@@ -18,11 +18,6 @@ const docTemplate = `{
     "paths": {
         "/auth/login": {
             "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "description": "log in with email password after verifing user",
                 "consumes": [
                     "application/json"
@@ -364,6 +359,13 @@ const docTemplate = `{
                 "summary": "Update a note",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "User",
                         "name": "user",
                         "in": "body",
@@ -549,13 +551,48 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{id}": {
+        "/users/me": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Get a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get a user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.GetUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
                 "description": "Get a user",
                 "consumes": [
                     "application/json"
@@ -616,13 +653,6 @@ const docTemplate = `{
                 "summary": "Update a user",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "User",
                         "name": "user",
                         "in": "body",
@@ -676,15 +706,6 @@ const docTemplate = `{
                     "user"
                 ],
                 "summary": "Delete a user",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -730,8 +751,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "description",
-                "title",
-                "user_id"
+                "title"
             ],
             "properties": {
                 "description": {
@@ -742,9 +762,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "minLength": 2
-                },
-                "user_id": {
-                    "type": "integer"
                 }
             }
         },

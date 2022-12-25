@@ -139,7 +139,7 @@ func (h *handlerV1) Verify(ctx *gin.Context) {
 	token, _, err := utils.CreateToken(h.cfg, &utils.TokenParams{
 		UserID:   user.ID,
 		Email:    user.Email,
-		Duration: time.Hour * 24 * 30,
+		Duration: time.Minute * 10,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errResponse(err))
@@ -154,10 +154,8 @@ func (h *handlerV1) Verify(ctx *gin.Context) {
 		CreatedAt:   user.CreatedAt,
 		AccessToken: token,
 	})
-
 }
 
-// @Security ApiKeyAuth
 // @Router /auth/login [post]
 // @Summary log in with email password after verifing user
 // @Description log in with email password after verifing user

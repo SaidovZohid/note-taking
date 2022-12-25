@@ -29,8 +29,14 @@ func (h *handlerV1) CreateNote(ctx *gin.Context) {
 		return
 	}
 
+	user, err := h.GetAuthPayload(h.cfg, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errResponse(err))
+		return
+	}
+
 	note, err := h.storage.Note().Create(&repo.Note{
-		UserID:      req.UserID,
+		UserID:      user.UserID,
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -40,14 +46,7 @@ func (h *handlerV1) CreateNote(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, models.GetNoteResponse{
-		ID:          note.ID,
-		UserID:      note.UserID,
-		Title:       note.Title,
-		Description: note.Description,
-		CreatedAt:   note.CreatedAt,
-		UpdatedAt:   note.UpdatedAt,
-	})
+	ctx.JSON(http.StatusCreated, parseNoteModel(note))
 }
 
 // @Security ApiKeyAuth
@@ -74,14 +73,7 @@ func (h *handlerV1) GetNote(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, models.GetNoteResponse{
-		ID:          note.ID,
-		UserID:      note.UserID,
-		Title:       note.Title,
-		Description: note.Description,
-		CreatedAt:   note.CreatedAt,
-		UpdatedAt:   note.UpdatedAt,
-	})
+	ctx.JSON(http.StatusOK, parseNoteModel(note))
 }
 
 // @Security ApiKeyAuth
@@ -91,11 +83,18 @@ func (h *handlerV1) GetNote(ctx *gin.Context) {
 // @Tags note
 // @Accept json
 // @Produce json
+// @Param id path int true "Id"
 // @Param user body models.CreateOrUpdateNoteRequest true "User"
 // @Success 200 {object} models.GetNoteResponse
 // @Failure 500 {object} models.ResponseError
 // @Failure 400 {object} models.ResponseError
 func (h *handlerV1) UpdateNote(ctx *gin.Context) {
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 6)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errResponse(err))
+		return
+	}
+
 	var (
 		req models.CreateOrUpdateNoteRequest
 	)
@@ -104,9 +103,15 @@ func (h *handlerV1) UpdateNote(ctx *gin.Context) {
 		return
 	}
 
+	user, err := h.GetAuthPayload(h.cfg, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errResponse(err))
+		return
+	}
+
 	note, err := h.storage.Note().Update(&repo.Note{
-		ID:          req.UserID,
-		UserID:      req.UserID,
+		ID:          id,
+		UserID:      user.UserID,
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -115,14 +120,7 @@ func (h *handlerV1) UpdateNote(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, models.GetNoteResponse{
-		ID:          note.ID,
-		UserID:      note.UserID,
-		Title:       note.Title,
-		Description: note.Description,
-		CreatedAt:   note.CreatedAt,
-		UpdatedAt:   note.UpdatedAt,
-	})
+	ctx.JSON(http.StatusOK, parseNoteModel(note))
 }
 
 // @Security ApiKeyAuth
@@ -143,7 +141,13 @@ func (h *handlerV1) DeleteNote(ctx *gin.Context) {
 		return
 	}
 
-	err = h.storage.Note().Delete(id)
+	user, err := h.GetAuthPayload(h.cfg, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errResponse(err))
+		return
+	}
+
+	err = h.storage.Note().Delete(id, user.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errResponse(err))
 		return

@@ -1,8 +1,8 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/SaidovZohid/note-taking/storage/repo"
 	"github.com/jmoiron/sqlx"
@@ -17,6 +17,9 @@ func NewNote(db *sqlx.DB) repo.NoteStorageI {
 }
 
 func (nr *noteRepo) Create(n *repo.Note) (*repo.Note, error) {
+	var (
+		updatedAt sql.NullTime
+	)
 	query := `
 		INSERT INTO notes (
 			user_id,
@@ -33,18 +36,21 @@ func (nr *noteRepo) Create(n *repo.Note) (*repo.Note, error) {
 	).Scan(
 		&n.ID,
 		&n.CreatedAt,
-		&n.UpdatedAt,
+		&updatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
-	
+
+	n.UpdatedAt = updatedAt.Time
+
 	return n, nil
 }
 
 func (nr *noteRepo) Get(note_id int64) (*repo.Note, error) {
 	var (
-		note repo.Note
+		note      repo.Note
+		updatedAt sql.NullTime
 	)
 	query := `
 		SELECT 
@@ -54,7 +60,7 @@ func (nr *noteRepo) Get(note_id int64) (*repo.Note, error) {
 			description,
 			created_at,
 			updated_at
-		FROM notes WHERE id = $1 AND deleted_at IS NULL 
+		FROM notes WHERE id = $1
 	`
 	err := nr.db.QueryRow(query, note_id).Scan(
 		&note.ID,
@@ -62,25 +68,29 @@ func (nr *noteRepo) Get(note_id int64) (*repo.Note, error) {
 		&note.Title,
 		&note.Description,
 		&note.CreatedAt,
-		&note.UpdatedAt,
+		&updatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	note.UpdatedAt = updatedAt.Time
 
 	return &note, nil
 }
 
 func (nr *noteRepo) Update(n *repo.Note) (*repo.Note, error) {
 	var (
-		note repo.Note
+		note      repo.Note
+		updatedAt sql.NullTime
 	)
 
 	query := `
 		UPDATE notes SET 
 			title = $1,
 			description = $2,
-			updated_at = $3
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $3 AND user_id = $4
 		RETURNING 
 			id,
 			user_id, 
@@ -94,47 +104,54 @@ func (nr *noteRepo) Update(n *repo.Note) (*repo.Note, error) {
 		query,
 		n.Title,
 		n.Description,
-		time.Now(),
+		n.ID,
+		n.UserID,
 	).Scan(
 		&note.ID,
 		&note.UserID,
 		&note.Title,
 		&note.Description,
 		&note.CreatedAt,
-		&note.UpdatedAt,
+		&updatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	note.UpdatedAt = updatedAt.Time
+
 	return &note, err
 }
 
-func (nr *noteRepo) Delete(note_id int64) error {
+func (nr *noteRepo) Delete(noteId, userId int64) error {
 	query := `
-		UPDATE notes SET 
-			deleted_at = $1
-		WHERE id = $2
+		DELETE FROM notes WHERE id = $1 AND user_id = $2
 	`
 
-	_, err := nr.db.Exec(query, time.Now(), note_id)
+	res, err := nr.db.Exec(query, noteId, userId)
 	if err != nil {
 		return err
+	}
+	if result, _ := res.RowsAffected(); result == 0 {
+		return sql.ErrNoRows
 	}
 
 	return nil
 }
 
 func (nr *noteRepo) GetAll(params *repo.GetAllNotesParams) (*repo.GetALlNotesResult, error) {
-	var res repo.GetALlNotesResult
+	var (
+		res       repo.GetALlNotesResult
+		updatedAt sql.NullTime
+	)
 	res.Notes = make([]*repo.Note, 0)
 	offset := (params.Page - 1) * params.Limit
 	limit := fmt.Sprintf(" LIMIT %d OFFSET %d ", params.Limit, offset)
-	filter := " WHERE deleted_at IS NULL "
+	filter := ""
 	if params.Search != "" {
 		str := "%" + params.Search + "%"
-		filter += fmt.Sprintf(`
-			AND title ILIKE '%s' OR description ILIKE '%s'
+		filter = fmt.Sprintf(`
+			WHERE title ILIKE '%s' OR description ILIKE '%s'
 		`, str, str)
 	}
 	orderBy := " ORDER BY created_at DESC"
@@ -164,18 +181,19 @@ func (nr *noteRepo) GetAll(params *repo.GetAllNotesParams) (*repo.GetALlNotesRes
 			&note.Title,
 			&note.Description,
 			&note.CreatedAt,
-			&note.UpdatedAt,
+			&updatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
+		note.UpdatedAt = updatedAt.Time
 		res.Notes = append(res.Notes, &note)
 	}
-	queryCount := "SELECT count(*) FROM notes " + filter 
+	queryCount := "SELECT count(*) FROM notes " + filter
 	err = nr.db.QueryRow(queryCount).Scan(&res.Count)
 	if err != nil {
 		return nil, err
 	}
 
-	return &res, nil 
+	return &res, nil
 }

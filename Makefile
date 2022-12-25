@@ -20,3 +20,9 @@ migrate-down:
 
 swag-init:
 	swag init -g api/server.go -o api/docs
+
+compose-up:
+	docker compose --env-file .env.docker up
+
+compose-down:
+	docker compose down

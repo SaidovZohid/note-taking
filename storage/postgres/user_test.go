@@ -9,15 +9,14 @@ import (
 )
 
 func createUser(t *testing.T) *repo.User {
-	User, err := dbManager.User().Create(&repo.User{
+	user, err := dbManager.User().Create(&repo.User{
 		FirstName: faker.FirstName(),
 		LastName:  faker.LastName(),
 		Email:     faker.Email(),
 		Password:  faker.Password(),
-		Username:  faker.Username(),
 	})
 	require.NoError(t, err)
-	return User
+	return user
 }
 
 func deleteUser(t *testing.T, user_id int64) {
@@ -65,6 +64,7 @@ func TestGetAllUsers(t *testing.T) {
 	users, err := dbManager.User().GetAll(&repo.GetAllUsersParams{
 		Limit:  10,
 		Page:   1,
+		Search: "zohid",
 		SortBy: "ASC",
 	})
 	require.NoError(t, err)

@@ -25,7 +25,7 @@ type RouteOptions struct {
 // @name Authorization
 // @Security ApiKeyAuth
 func New(opt *RouteOptions) *gin.Engine {
-	router := gin.New()
+	router := gin.Default()
 
 	handler := v1.New(&v1.HandlerV1{
 		Cfg:      opt.Cfg,
@@ -36,7 +36,8 @@ func New(opt *RouteOptions) *gin.Engine {
 	router.Static("/medias", "./media")
 	{
 		apiV1.POST("/users", handler.AuthMiddileWare, handler.CreateUser)
-		apiV1.GET("/users/:id", handler.AuthMiddileWare, handler.GetUser)
+		apiV1.GET("/users/:id", handler.GetUser)
+		apiV1.GET("/users/me", handler.AuthMiddileWare, handler.GetUserProfile)
 		apiV1.PUT("/users/:id", handler.AuthMiddileWare, handler.UpdateUser)
 		apiV1.DELETE("/users/:id", handler.AuthMiddileWare, handler.DeleteUser)
 		apiV1.GET("/users", handler.GetAllUsers)

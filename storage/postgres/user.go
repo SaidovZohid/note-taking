@@ -1,9 +1,10 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
-	"time"
 
+	"github.com/SaidovZohid/note-taking/pkg/utils"
 	"github.com/SaidovZohid/note-taking/storage/repo"
 	"github.com/jmoiron/sqlx"
 )
@@ -19,6 +20,9 @@ func NewUserStorage(db *sqlx.DB) repo.UserStorageI {
 }
 
 func (ur *userRepo) Create(u *repo.User) (*repo.User, error) {
+	var (
+		updatedAt sql.NullTime
+	)
 	query := `
 		INSERT INTO users (
 			first_name,
@@ -34,26 +38,31 @@ func (ur *userRepo) Create(u *repo.User) (*repo.User, error) {
 		query,
 		u.FirstName,
 		u.LastName,
-		u.PhoneNumber,
+		utils.NullString(u.PhoneNumber),
 		u.Email,
 		u.Password,
-		u.Username,
-		u.ImageUrl,
+		utils.NullString(u.Username),
+		utils.NullString(u.ImageUrl),
 	).Scan(
 		&u.ID,
 		&u.CreatedAt,
-		&u.UpdatedAt,
+		&updatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return u, nil 
-} 
+	u.UpdatedAt = updatedAt.Time
+
+	return u, nil
+}
 
 func (ur *userRepo) Get(user_id int64) (*repo.User, error) {
-	var u repo.User
+	var (
+		updatedAt                       sql.NullTime
+		imageUrl, phoneNumber, username sql.NullString
+		res                             repo.User
+	)
 	query := `
 		SELECT
 			id,
@@ -71,22 +80,26 @@ func (ur *userRepo) Get(user_id int64) (*repo.User, error) {
 		query,
 		user_id,
 	).Scan(
-		&u.ID,
-		&u.FirstName,
-		&u.LastName,
-		&u.PhoneNumber,
-		&u.Email,
-		&u.Username,
-		&u.ImageUrl,
-		&u.CreatedAt,
-		&u.UpdatedAt,
+		&res.ID,
+		&res.FirstName,
+		&res.LastName,
+		&phoneNumber,
+		&res.Email,
+		&username,
+		&imageUrl,
+		&res.CreatedAt,
+		&updatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return &u, nil 
+	res.PhoneNumber = phoneNumber.String
+	res.Username = username.String
+	res.ImageUrl = imageUrl.String
+	res.UpdatedAt = updatedAt.Time
+
+	return &res, nil
 }
 
 func (ur *userRepo) Update(u *repo.User) (*repo.User, error) {
@@ -98,8 +111,8 @@ func (ur *userRepo) Update(u *repo.User) (*repo.User, error) {
 			email = $4,
 			username = $5,
 			image_url = $6,
-			updated_at = $7
-		WHERE id = $8
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $7
 		RETURNING
 			id,
 			first_name,
@@ -111,53 +124,68 @@ func (ur *userRepo) Update(u *repo.User) (*repo.User, error) {
 			created_at,
 			updated_at
 	`
-	var res repo.User
+	var (
+		res                             repo.User
+		imageUrl, phoneNumber, username sql.NullString
+	)
 	err := ur.db.QueryRow(
 		query,
 		u.FirstName,
 		u.LastName,
-		u.PhoneNumber,
+		utils.NullString(u.PhoneNumber),
 		u.Email,
-		u.Username,
-		u.ImageUrl,
-		time.Now(),
+		utils.NullString(u.Username),
+		utils.NullString(u.ImageUrl),
 		u.ID,
 	).Scan(
 		&res.ID,
 		&res.FirstName,
 		&res.LastName,
-		&res.PhoneNumber,
+		&phoneNumber,
 		&res.Email,
-		&res.Username,
-		&res.ImageUrl,
+		&username,
+		&imageUrl,
 		&res.CreatedAt,
 		&res.UpdatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}
+	res.PhoneNumber = phoneNumber.String
+	res.Username = username.String
+	res.ImageUrl = imageUrl.String
 
 	return &res, nil
 }
 
 func (ur *userRepo) Delete(user_id int64) error {
-	query := "UPDATE users SET deleted_at = $1 WHERE id = $2"
+	query := "UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1"
 
-	_, err := ur.db.Exec(query, time.Now(), user_id)
+	res, err := ur.db.Exec(query, user_id)
 	if err != nil {
 		return err
+	}
+
+	if result, _ := res.RowsAffected(); result == 0 {
+		return sql.ErrNoRows
 	}
 
 	return nil
 }
 
-func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersResult,error) {
-	var res repo.GetAllUsersResult
+func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersResult, error) {
+	var (
+		res                             repo.GetAllUsersResult
+		updatedAt                       sql.NullTime
+		imageUrl, phoneNumber, username sql.NullString
+	)
 	res.Users = make([]*repo.User, 0)
 	filter := " WHERE deleted_at IS NULL "
+
 	offset := (params.Page - 1) * params.Limit
+
 	limit := fmt.Sprintf(" LIMIT %d OFFSET %d ", params.Limit, offset)
+
 	if params.Search != "" {
 		str := "%" + params.Search + "%"
 		filter += fmt.Sprintf(` 
@@ -169,7 +197,7 @@ func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersRes
 
 	orderBy := " ORDER BY created_at DESC "
 	if params.SortBy != "" {
-		orderBy = fmt.Sprintf(" ORDER BY created_at %s ", params.SortBy)		
+		orderBy = fmt.Sprintf(" ORDER BY created_at %s ", params.SortBy)
 	}
 
 	query := `
@@ -196,27 +224,31 @@ func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersRes
 			&u.ID,
 			&u.FirstName,
 			&u.LastName,
-			&u.PhoneNumber,
+			&phoneNumber,
 			&u.Email,
-			&u.Username,
-			&u.ImageUrl,
+			&username,
+			&imageUrl,
 			&u.CreatedAt,
-			&u.UpdatedAt,
+			&updatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
+		u.PhoneNumber = phoneNumber.String
+		u.Username = username.String
+		u.ImageUrl = imageUrl.String
+		u.UpdatedAt = updatedAt.Time
 
 		res.Users = append(res.Users, &u)
 	}
-	queryCount := "SELECT count(*) FROM users " + filter 
+	queryCount := "SELECT count(*) FROM users " + filter
 
 	err = ur.db.QueryRow(queryCount).Scan(&res.Count)
 	if err != nil {
 		return nil, err
 	}
 
-	return &res, nil 
+	return &res, nil
 }
 
 func (ur *userRepo) GetByEmail(email string) (*repo.User, error) {
@@ -234,7 +266,11 @@ func (ur *userRepo) GetByEmail(email string) (*repo.User, error) {
 			updated_at
 		FROM users WHERE email = $1
 	`
-	var res repo.User
+	var (
+		res                             repo.User
+		updatedAt                       sql.NullTime
+		imageUrl, phoneNumber, username sql.NullString
+	)
 	err := ur.db.QueryRow(
 		query,
 		email,
@@ -242,18 +278,21 @@ func (ur *userRepo) GetByEmail(email string) (*repo.User, error) {
 		&res.ID,
 		&res.FirstName,
 		&res.LastName,
-		&res.PhoneNumber,
+		&phoneNumber,
 		&res.Email,
 		&res.Password,
-		&res.Username,
-		&res.ImageUrl,
+		&username,
+		&imageUrl,
 		&res.CreatedAt,
-		&res.UpdatedAt,
+		&updatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}
+	res.PhoneNumber = phoneNumber.String
+	res.Username = username.String
+	res.ImageUrl = imageUrl.String
+	res.UpdatedAt = updatedAt.Time
 
-	return &res, nil 
+	return &res, nil
 }

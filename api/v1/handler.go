@@ -49,8 +49,8 @@ func parseUserModel(user *repo.User) models.GetUserResponse {
 		PhoneNumber: user.PhoneNumber,
 		Username:    user.Username,
 		ImageUrl:    user.ImageUrl,
-		CreatedAt:   user.CreatedAt,
-		UpdatedAt:   user.UpdatedAt,
+		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
@@ -60,8 +60,8 @@ func parseNoteModel(note *repo.Note) models.GetNoteResponse {
 		UserID:      note.UserID,
 		Title:       note.Title,
 		Description: note.Description,
-		CreatedAt:   note.CreatedAt,
-		UpdatedAt:   note.UpdatedAt,
+		CreatedAt:   note.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   note.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
@@ -133,7 +133,7 @@ func (h *handlerV1) sendVerificationCode(key, email string) error {
 		return err
 	}
 
-	err = h.inMemory.Set(key+email, code, time.Minute)
+	err = h.inMemory.Set(key+email, code, time.Minute*10)
 	if err != nil {
 		return err
 	}

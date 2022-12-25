@@ -24,12 +24,9 @@ definitions:
         maxLength: 100
         minLength: 2
         type: string
-      user_id:
-        type: integer
     required:
     - description
     - title
-    - user_id
     type: object
   models.CreateOrUpdateUserRequest:
     properties:
@@ -204,8 +201,6 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ResponseError'
-      security:
-      - ApiKeyAuth: []
       summary: log in with email password after verifing user
       tags:
       - register
@@ -427,6 +422,11 @@ paths:
       - application/json
       description: Update a note
       parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: User
         in: body
         name: user
@@ -527,12 +527,6 @@ paths:
       consumes:
       - application/json
       description: Delete a user
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
@@ -574,8 +568,6 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ResponseError'
-      security:
-      - ApiKeyAuth: []
       summary: Get a user
       tags:
       - user
@@ -584,11 +576,6 @@ paths:
       - application/json
       description: Update a user
       parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: integer
       - description: User
         in: body
         name: user
@@ -617,6 +604,31 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Update a user
+      tags:
+      - user
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get a user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ResponseError'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a user
       tags:
       - user
 securityDefinitions:

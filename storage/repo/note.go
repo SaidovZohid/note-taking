@@ -8,15 +8,14 @@ type Note struct {
 	Title       string
 	Description string
 	CreatedAt   time.Time
-	UpdatedAt   *time.Time
-	DeletedAt   *time.Time
+	UpdatedAt   time.Time
 }
 
 type NoteStorageI interface {
 	Create(n *Note) (*Note, error)
 	Get(note_id int64) (*Note, error)
 	Update(n *Note) (*Note, error)
-	Delete(note_id int64) error
+	Delete(noteId, userId int64) error
 	GetAll(params *GetAllNotesParams) (*GetALlNotesResult, error)
 }
 

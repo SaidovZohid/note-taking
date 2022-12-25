@@ -13,11 +13,12 @@ create table "users"(
 );
 
 create table "notes" (
-    id serial not null primary key,
-    user_id int not null references users(id),
-    title varchar(100) not null,
-    description varchar not null,
-    created_at timestamp default current_timestamp,
-    updated_at timestamp,
-    deleted_at timestamp
+    "id" serial not null primary key,
+    "user_id" int not null references users(id),
+    "title" varchar(100) not null,
+    "description" varchar not null,
+    "created_at" timestamp default current_timestamp,
+    "updated_at" timestamp
 );
+
+CREATE UNIQUE INDEX unique_value ON users(username, phone_number, email) WHERE deleted_at IS NULL;
