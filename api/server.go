@@ -5,6 +5,7 @@ import (
 	"github.com/SaidovZohid/note-taking/config"
 	"github.com/SaidovZohid/note-taking/storage"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -18,7 +19,6 @@ type RouteOptions struct {
 // New @title           Swagger for note api
 // @version         2.0
 // @description     This is a note service api.
-// @host      		localhost:8080
 // @BasePath  		/v1
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
@@ -26,6 +26,12 @@ type RouteOptions struct {
 // @Security ApiKeyAuth
 func New(opt *RouteOptions) *gin.Engine {
 	router := gin.Default()
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowCredentials = true
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "*")
+	router.Use(cors.New(corsConfig))
 
 	handler := v1.New(&v1.HandlerV1{
 		Cfg:      opt.Cfg,
