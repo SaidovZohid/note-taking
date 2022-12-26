@@ -24,5 +24,5 @@ swag-init:
 compose-up:
 	docker compose --env-file .env.docker up
 
-compose-down:
-	docker compose down
+lint:
+	golangci-lint run

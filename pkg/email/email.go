@@ -35,7 +35,10 @@ func SendEmail(cfg *config.Config, req *SendEmailRequest) error {
 		return err
 	}
 
-	t.Execute(&body, req.Body)
+	err = t.Execute(&body, req.Body)
+	if err != nil {
+		return err
+	}
 
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	subject := fmt.Sprintf("Subject: %s\n", req.Subject)

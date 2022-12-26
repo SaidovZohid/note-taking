@@ -38,7 +38,11 @@ func (h *handlerV1) UploadFile(ctx *gin.Context) {
 	dir, _ := os.Getwd()
 
 	if _, err := os.Stat(dir + "/media"); os.IsNotExist(err) {
-		os.Mkdir(dir + "/media", os.ModePerm)
+		err = os.Mkdir(dir + "/media", os.ModePerm)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errResponse(err))
+			return
+		}
 	} 	
 
 	filePath := "/media/" + fileName

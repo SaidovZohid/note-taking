@@ -1,6 +1,8 @@
 package config
 
 import (
+	"log"
+
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
@@ -33,7 +35,10 @@ type Authorization struct {
 }
 
 func New(path string) Config {
-	godotenv.Load(path + "/.env")
+	err := godotenv.Load(path + "/.env")
+	if err != nil {
+		log.Fatalf("failed to load .env file: %v", err)
+	}
 
 	conf := viper.New()
 	conf.AutomaticEnv()
